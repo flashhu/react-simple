@@ -1,13 +1,14 @@
 import React from '../react'
+import { diff } from './diff'
 
 /**
  * @description: React元素渲染为DOM，并挂载
  * @param {*} element (vnode) 虚拟Node
  * @param {*} container 节点
  */
-function render(element, container) {
-    // console.log(element);
-    return container.appendChild(_render(element))
+function render(element, container, dom) {
+    // return container.appendChild(_render(element))
+    return diff(dom, element, container)
 }
 
 /**
@@ -143,7 +144,7 @@ function _render(element) {
  * @param {*} key 属性名
  * @param {*} value 属性值
  */
-function setAttribute(dom, key, value) {
+export function setAttribute(dom, key, value) {
     // 将 className 转为 class
     if (key === 'className') {
         key = 'class';
