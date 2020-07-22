@@ -38,12 +38,30 @@ function createComponent(comp, props) {
  * @description: Component实例 -> dom
  * @param {*} comp Component实例，例：Component {props: {…}, state: {…}, constructor: ƒ, render: ƒ}
  */
-function renderComponent(comp) {
+export function renderComponent(comp) {
     let base;
     // 1. 得到返回的 React元素（jsx），例：{component: "div", props: {…}, children: Array(3)}
     const renderer = comp.render();
+
     // 2. 得到需要挂载的节点对象
     base = _render(renderer);
+
+    if (comp.base) {
+        // 此处可设置 componentWillUpdate
+        // ?
+        if (comp.componentDidUpdate) {
+            comp.componentDidUpdate();
+        }
+    } else if (comp.componentDidMount) {
+        // ?
+        comp.componentDidMount()
+    }
+
+    // 节点替换 例：<span>1</span> => <span>2</span>
+    if (comp.base && comp.base.parentNode) {
+        comp.base.parentNode.replaceChild(base, comp.base);
+    }
+
     comp.base = base;
 }
 
@@ -53,6 +71,12 @@ function renderComponent(comp) {
  * @param {*} props 属性，例 { title: 'test' }
  */
 function setComponentProps(comp, props) {
+    if( !comp.base ) {
+        // 此处可设置 componentWillMount
+    } else {
+        // 此处可设置 componentWillReceiveProps
+    }
+
     // 1. 设置组件属性
     comp.props = props;
     // 2. 渲染组件
@@ -68,13 +92,15 @@ function _render(element) {
     if (element === undefined || element === null || typeof element === 'boolean'){
         element = '';
     }
+    // 二、 为数值，强制转为字符串
+    if (typeof element === 'number') element = String(element);
 
-    // 二、为字符串，创建文本节点
+    // 三、为字符串，创建文本节点
     if (typeof element === 'string') {
         return document.createTextNode(element);
     }
 
-    // 三、为函数组件
+    // 四、为函数组件
     if (typeof element.component === 'function') {
         // 1. 创建节点
         const comp = createComponent(element.component, element.props);
@@ -86,7 +112,7 @@ function _render(element) {
         return comp.base;
     }
 
-    // 四、为React元素（虚拟DOM对象）
+    // 五、为React元素（虚拟DOM对象）
     const { component, props } = element;
 
     // 1. 创建节点对象
@@ -101,9 +127,11 @@ function _render(element) {
     }
 
     // 3. 递归渲染子节点
-    element.children.forEach(child => {
-        render(child, dom)
-    })
+    if (element.children) {
+        element.children.forEach(child => {
+            render(child, dom)
+        })
+    }
 
     // 返回需要挂载的节点对象
     return dom;
